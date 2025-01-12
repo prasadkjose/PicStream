@@ -32,7 +32,7 @@
 3. Configure Google API credentials:
    - Create a project in the [Google Cloud Console](https://console.cloud.google.com/).
    - Enable the Google Photos Library API.
-   - Download the `credentials.json` file and place it in the PicStream directory.
+   - Download the `secrets.json` file and place it in the PicStream directory.
 
 ---
 
