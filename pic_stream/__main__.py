@@ -4,21 +4,14 @@ import json
 import flask
 import requests
 import uuid
+from pic_stream.settings import config
 
 app = flask.Flask(__name__)
 
-# Open and read the JSON file
-with open(
-    "/Users/prasadkoshyjose/personalProjects/PicStream/secrets.json", "r"
-) as file:
-    config = json.load(file)["installed"]
-
-# Get client ID, client secret, scope, redirectURI
-# To get these credentials (CLIENT_ID CLIENT_SECRET) and for your application, visit
-# https://console.cloud.google.com/apis/credentials.
 CLIENT_ID = config["client_id"]
 CLIENT_SECRET = config["client_secret"]
-# Access scopes for two non-Sign-In scopes: Read-only Drive activity and Google Calendar.
+
+# Access scopes.
 SCOPE = "profile https://www.googleapis.com/auth/photospicker.mediaitems.readonly"
 
 
@@ -45,13 +38,12 @@ def index():
             "https://www.googleapis.com/auth/photospicker.mediaitems.readonly"
             in credentials["scope"]
         ):
-            # User authorized read-only Drive activity permission.
+            # User authorized read-only Photos activity permission.
             params = {"Authorization": "Bearer {}".format(credentials["access_token"])}
             req_uri = "https://photospicker.googleapis.com/v1/sessions/"
             r = requests.post(req_uri, headers=params).text
         else:
-            # User didn't authorize read-only Drive activity permission.
-            # Update UX and application accordingly
+            # User didn't authorize read-only Photo activity permission.
             r = "User did not authorize photo permission."
 
     return r
@@ -62,12 +54,15 @@ def oauth2callback():
     if "code" not in flask.request.args:
         state = str(uuid.uuid4())
         flask.session["state"] = state
-        # Generate a url that asks permissions for the Drive activity
-        # and Google Calendar scope. Then, redirect user to the url.
+        # Generate a url. Then, redirect user to the url.
         auth_uri = (
             "https://accounts.google.com/o/oauth2/v2/auth?response_type=code"
-            "&client_id={}&redirect_uri={}&scope={}&state={}"
-        ).format(CLIENT_ID, REDIRECT_URI, SCOPE, state)
+            "&client_id=%s&redirect_uri=%s&scope=%s&state=%s",
+            CLIENT_ID,
+            REDIRECT_URI,
+            SCOPE,
+            state,
+        )
         return flask.redirect(auth_uri)
     else:
         if (

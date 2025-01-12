@@ -39,21 +39,7 @@
 ## Usage
 
 1. Authenticate with your Google account:
-
-   ```bash
-   picstream auth
-   ```
-
----
-
-## Configuration
-
-PicStream saves your preferences in a configuration file (`~/.picstream/config.yaml`). Customize settings such as:
-
-- Default frame
-- Photo resolution
-- Cache settings
-
+Download the client secret json file from google api console and save it as secrets.json in the projects root directory. 
 ---
 
 ## Contributing
