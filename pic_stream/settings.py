@@ -14,6 +14,8 @@ logging.basicConfig(
 
 LOGGER = logging.getLogger(__name__)
 
+HOST_NAME = "localhost"
+
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.abspath(os.path.join(ROOT_DIR, os.pardir))
