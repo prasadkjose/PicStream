@@ -2,7 +2,7 @@
 
 
 class UserSessionHandler:
-    """ """
+    """Class to handle photo picker sessions."""
 
     def __init__(self, session: dict):
         """Takes in the Json Response from the API"""
@@ -13,5 +13,3 @@ class UserSessionHandler:
         # TODO: validate session with pydantic
         for k, v in self.raw_session.items():
             setattr(self, k, v)
-
-        
