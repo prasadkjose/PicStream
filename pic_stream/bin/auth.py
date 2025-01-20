@@ -63,8 +63,8 @@ def oauth2callback():
         flask.session["state"] = state
         # Generate a url. Then, redirect user to the url.
         auth_uri = f"https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope={SCOPE}&state={state}"
-
-        # TODO: https://ngrok.com/docs/http/oauth/?cty=python-sdk for remote oAuth
+        # TODO: QR CODE for this URL
+        # TODO: Tunnell out this localhost with a static IP or hostname(NGROK) and set redirect URL in console to this
         return flask.redirect(auth_uri)
     else:
         if (
