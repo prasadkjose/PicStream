@@ -5,12 +5,12 @@ import flask
 import requests
 import uuid
 from pic_stream.settings import config, HOST_NAME
-from pic_stream.models.oauth_models import GoogleAuth
+
+# from pic_stream.models.oauth_models import GoogleAuth
+from pic_stream.bin.session_handler import UserSessionHandler
 
 # Validate the auth model
-auth_config = GoogleAuth(
-    client_id=config["client_id"], client_secret=config["client_secret"]
-)
+auth_config = config
 CLIENT_ID = auth_config["client_id"]
 CLIENT_SECRET = auth_config["client_secret"]
 
@@ -46,8 +46,9 @@ def index():
             params = {"Authorization": "Bearer {}".format(credentials["access_token"])}
             req_uri = "https://photospicker.googleapis.com/v1/sessions/"
             r = requests.post(req_uri, headers=params).text
-
-            # TODO: Take the PickingSession object and get session ID, redirect URL for picker, pollingConfig, expiry time
+            # Take the PickingSession object and get session ID, redirect URL for picker, pollingConfig, expiry time
+            session = UserSessionHandler(r)
+            session.parse_session()
         else:
             # User didn't authorize read-only Photo activity permission.
             r = "User did not authorize photo permission."
@@ -63,6 +64,7 @@ def oauth2callback():
         # Generate a url. Then, redirect user to the url.
         auth_uri = f"https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope={SCOPE}&state={state}"
 
+        # TODO: https://ngrok.com/docs/http/oauth/?cty=python-sdk for remote oAuth
         return flask.redirect(auth_uri)
     else:
         if (
