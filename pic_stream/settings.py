@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import logging
+import pic_stream.constants as constants
 
 # setup configuration for logging
 logging.basicConfig(
@@ -14,8 +15,14 @@ logging.basicConfig(
 
 LOGGER = logging.getLogger(__name__)
 
-HOST_NAME = "localhost"
+HOST_NAME = "pony-safe-stag.ngrok-free.app"
 
+GOOGLE_URLS = {
+    "sessions": "https://photospicker.googleapis.com/v1/sessions/",
+    "photospicker_ro_scope": "https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
+    "oAuth": "https://accounts.google.com/o/oauth2/v2/auth",
+    "media_items": "https://photospicker.googleapis.com/v1/mediaItems",
+}
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.abspath(os.path.join(ROOT_DIR, os.pardir))
@@ -76,3 +83,17 @@ def exit_gracefully(error):
 
 
 config = parse_secrets(secrets_json_raw)
+
+
+def get_constant(name):
+    """
+    Retrieve the value of a constant from the constants module.
+
+    :param name: The name of the constant to retrieve.
+    :return: The value of the constant.
+    :raises AttributeError: If the constant is not defined in constants.py.
+    """
+    try:
+        return getattr(constants, name)
+    except AttributeError as e:
+        raise AttributeError(f"Constant '{name}' not found in constants.py") from e

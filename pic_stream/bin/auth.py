@@ -4,7 +4,7 @@ import json
 import flask
 import requests
 import uuid
-from pic_stream.settings import config, HOST_NAME
+from pic_stream.settings import config, HOST_NAME, GOOGLE_URLS
 
 # from pic_stream.models.oauth_models import GoogleAuth
 from pic_stream.bin.session_handler import UserSessionHandler
@@ -24,7 +24,7 @@ auth_bp = flask.Blueprint("auth", __name__)
 # match one of the authorized redirect URIs for the OAuth 2.0 client, which you
 # configured in the API Console. If this value doesn't match an authorized URI,
 # you will get a 'redirect_uri_mismatch' error.
-REDIRECT_URI = "http://" + HOST_NAME + "/oauth2callback"
+REDIRECT_URI = "https://" + HOST_NAME + "/oauth2callback"
 
 
 @auth_bp.route("/")
@@ -33,22 +33,26 @@ def index():
         return flask.redirect(flask.url_for("auth.oauth2callback"))
 
     credentials = json.loads(flask.session["credentials"])
+    print("credentials loaded")
 
     if credentials["expires_in"] <= 0:
         return flask.redirect(flask.url_for("auth.oauth2callback"))
     else:
         # User authorized the request. Now, check which scopes were granted.
-        if (
-            "https://www.googleapis.com/auth/photospicker.mediaitems.readonly"
-            in credentials["scope"]
-        ):
+        print("request session")
+        if GOOGLE_URLS["photospicker_ro_scope"] in credentials["scope"]:
             # User authorized read-only Photos activity permission.
-            params = {"Authorization": "Bearer {}".format(credentials["access_token"])}
-            req_uri = "https://photospicker.googleapis.com/v1/sessions/"
-            r = requests.post(req_uri, headers=params).text
+            oauth_params = {
+                "Authorization": "Bearer {}".format(credentials["access_token"])
+            }
+            req_uri = GOOGLE_URLS["sessions"]
+            response_session_dict = requests.post(req_uri, headers=oauth_params).text
+
             # Take the PickingSession object and get session ID, redirect URL for picker, pollingConfig, expiry time
-            session = UserSessionHandler(r)
-            session.parse_session()
+            session = UserSessionHandler(response_session_dict, oauth_params)
+            # parse_result = session.parse_session()
+            r = session.parse_session()
+
         else:
             # User didn't authorize read-only Photo activity permission.
             r = "User did not authorize photo permission."
@@ -56,15 +60,27 @@ def index():
     return r
 
 
+@auth_bp.route("/media")
+def media():
+    credentials = json.loads(flask.session["credentials"])
+    oauth_params = {"Authorization": "Bearer {}".format(credentials["access_token"])}
+
+    media_items = requests.get(GOOGLE_URLS["media_items"], headers=oauth_params)
+    return "mediaItems" + str(media_items)
+
+
 @auth_bp.route("/oauth2callback")
 def oauth2callback():
+    print("oauth2callback")
     if "code" not in flask.request.args:
         state = str(uuid.uuid4())
         flask.session["state"] = state
         # Generate a url. Then, redirect user to the url.
-        auth_uri = f"https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope={SCOPE}&state={state}"
-        # TODO: QR CODE for this URL
-        # TODO: Tunnell out this localhost with a static IP or hostname(NGROK) and set redirect URL in console to this
+        auth_uri = (
+            GOOGLE_URLS["oAuth"]
+            + f"?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope={SCOPE}&state={state}"
+        )
+
         return flask.redirect(auth_uri)
     else:
         if (
@@ -74,6 +90,8 @@ def oauth2callback():
             return "State mismatch. Possible CSRF attack.", 400
 
         auth_code = flask.request.args.get("code")
+        print("request credentials")
+
         data = {
             "code": auth_code,
             "client_id": CLIENT_ID,
@@ -84,5 +102,7 @@ def oauth2callback():
 
         # Exchange authorization code for access and refresh tokens (if access_type is offline)
         r = requests.post("https://oauth2.googleapis.com/token", data=data)
+        print(f"request successful: {r.text}")
+
         flask.session["credentials"] = r.text
         return flask.redirect(flask.url_for("auth.index"))

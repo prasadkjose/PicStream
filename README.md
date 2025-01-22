@@ -68,3 +68,11 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 **PicStream** – Your memories, beautifully streamed.
+
+
+# NOTES TO Revise: 
+
+Get a static host from NGROK
+add it to the google console API along with the redirectURI. 
+run NGROK tunnel agent in another console.  Example: ngrok http --url=pony-safe-stag.ngrok-free.app 80 
+Make sure the flask server is running in port 80
